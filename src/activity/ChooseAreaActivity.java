@@ -7,7 +7,10 @@ import com.coolweather.app.R;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
@@ -61,11 +64,25 @@ public class ChooseAreaActivity extends Activity{
 	 * 当前选中的级别
 	 */
 	private int currentLevel;
+	/*
+	 *是否从WeatherActivity中跳转过来
+	 */
+	private boolean isFromWeatherActivity;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
+		isFromWeatherActivity=getIntent().getBooleanExtra("from_weather_activity", false);
+		
+		SharedPreferences prefs=PreferenceManager.getDefaultSharedPreferences(this);
+		//已经选择了城市且不是从WeatherActivity跳转过过来，才会直接跳转到WeatherActivity
+		if(prefs.getBoolean("city_selected", false)&& !isFromWeatherActivity){
+			Intent intent=new Intent(this,WeatherActivity.class);
+			startActivity(intent);
+			finish();
+			return;
+		}
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.choose_area);
 		listView=(ListView)findViewById(R.id.list_view);
@@ -84,6 +101,12 @@ public class ChooseAreaActivity extends Activity{
 				}else if(currentLevel==LEVEL_CITY){
 					selectedCity=cityList.get(position);
 					queryCountries();
+				}else if(currentLevel==LEVEL_COUNTRY){
+					String countryCode=countryList.get(position).getCountryCode();
+					Intent intent=new Intent(ChooseAreaActivity.this,WeatherActivity.class);
+					intent.putExtra("country_code", countryCode);
+					startActivity(intent);
+					finish();
 				}
 			}
 			
@@ -247,6 +270,10 @@ public class ChooseAreaActivity extends Activity{
 		}else if(currentLevel==LEVEL_CITY){
 			queryProvinces();
 		}else{
+			if(isFromWeatherActivity){
+				Intent intent=new Intent(this,WeatherActivity.class);
+				startActivity(intent);
+			}
 			finish();
 		}
 	}
